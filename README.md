@@ -27,8 +27,15 @@ vertex-ai-fastAPI/
    cd vertex-ai-fastAPI
    
 
-2.**Create and activate a virtual environment**
+2. **Create and activate a virtual environment**
    ```sh
     python -m venv venv
     venv\Scripts\activate   # On Windows
     # source venv/bin/activate   # On Linux/Mac
+3. **Install dependencies**
+   ```sh
+   pip install -r requirement.txt
+
+4. **Configure Google Cloud credentials**
+  - Place your ```sh service-account-key.json in the project root.
+Important: Do NOT commit this file to GitHub. Add it to your .gitignore.
