@@ -28,7 +28,7 @@ vertex-ai-fastAPI/
    
 
 2.**Create and activate a virtual environment**
-    ```sh
+   ```sh
     python -m venv venv
     venv\Scripts\activate   # On Windows
     # source venv/bin/activate   # On Linux/Mac
