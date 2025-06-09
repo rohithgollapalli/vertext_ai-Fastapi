@@ -40,7 +40,7 @@ vertex-ai-fastAPI/
 
 4. **Configure Google Cloud credentials**
   - Place your  `service-account-key.json` in the project root.
--Important: Do NOT commit this file to GitHub.
+  - Important: Do NOT commit this file to GitHub.
 
 5. **Set up your database**
   - Update DATABASE_URL in `db.py` with your actual database credentials.
