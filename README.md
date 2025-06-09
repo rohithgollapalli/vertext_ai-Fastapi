@@ -19,3 +19,15 @@ vertex-ai-fastAPI/
 ├── service-account-key.json # (GCP credentials, should be in .gitignore)
 
 
+## Setup
+
+1. **Clone the repository**
+   ```sh
+   git clone https://github.com/<your-username>/<repo-name>.git
+   cd vertex-ai-fastAPI
+   
+
+2.**Create and activate a virtual environment**
+    python -m venv venv
+    venv\Scripts\activate   # On Windows
+    # source venv/bin/activate   # On Linux/Mac
