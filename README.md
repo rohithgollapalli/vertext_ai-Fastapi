@@ -37,5 +37,17 @@ vertex-ai-fastAPI/
    pip install -r requirement.txt
 
 4. **Configure Google Cloud credentials**
-  - Place your ```sh service-account-key.json in the project root.
-Important: Do NOT commit this file to GitHub. Add it to your .gitignore.
+  - Place your  service-account-key.json in the project root.
+-Important: Do NOT commit this file to GitHub. Add it to your .gitignore.
+
+5. **Set up your database**
+  - Update DATABASE_URL in db.py with your actual database credentials.
+
+6. **Run the FastAPI server**
+   ```sh
+   uvicorn main:app --reload
+   
+7. **Test the API**
+   -Use the included test.py or tools like Postman or curl
+
+       
