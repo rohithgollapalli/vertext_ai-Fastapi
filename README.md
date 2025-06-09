@@ -11,11 +11,17 @@ This project is a FastAPI-based web service that uses Google Vertex AI for text 
 
 ## Project Structure
 vertex-ai-fastAPI/
-├── classify.py # Vertex AI classification logic 
-├── main.py # FastAPI app and API endpoints
-├── db.py # Database models and session setup 
-├── test.py # API endpoint tests 
-├── requirement.txt # Python dependencies
-├── service-account-key.json # (GCP credentials, should be in .gitignore)
+├── classify.py
+# Vertex AI classification logic 
+├── main.py 
+# FastAPI app and API endpoints
+├── db.py 
+# Database models and session setup 
+├── test.py
+# API endpoint tests 
+├── requirement.txt 
+# Python dependencies
+├── service-account-key.json
+# (GCP credentials, should be in .gitignore)
 
 
