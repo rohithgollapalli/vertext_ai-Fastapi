@@ -1,89 +1,102 @@
-import os
-from langchain_google_vertexai import VertexAI
-from google.cloud import aiplatform
-from google import genai
-from google.genai import types
-import base64
+from fastapi import FastAPI
+from pydantic import BaseModel
+import classify
+from typing import Optional, List
+from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, Column, Integer, Text, Boolean, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 
-# Set Google Cloud credentials (masked for security)
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service-account-key.json"
+# Import your SQLAlchemy session and base from your db module (ensure confidential details are masked in db.py)
+from db import SessionLocal, engine, Base
 
-# Initialize Vertex AI platform (project and location masked)
-aiplatform.init(project="your-project-id", location="your-region")
+app = FastAPI()
 
-# Initialize VertexAI model (model name masked)
-tuned_model = VertexAI(
-    model_name="projects/********/locations/your-region/models/********@1",
-    temperature=0.7,
-    max_output_tokens=100,
-)
+# Database model for storing question and response logs
+class Responselog(Base):
+    __tablename__ = "response_log"
+    id = Column(Integer, primary_key=True, index=True)
+    question = Column(Text)
+    response = Column(Text)
+    feedbacks = relationship("Feedback", back_populates="response")
 
-def generate(question):
-    """
-    Generates a classification for the given question using a Vertex AI endpoint.
+# Database model for storing feedback on responses
+class Feedback(Base):
+    __tablename__ = "feedback"
+    id = Column(Integer, primary_key=True, index=True)
+    response_id = Column(Integer, ForeignKey("response_log.id"))
+    feedback_text = Column(Text)
+    correct = Column(Boolean)
+    response = relationship("Responselog", back_populates="feedbacks")
 
-    Args:
-        question (str): The input text to classify.
+# Create tables in the database (if not already present)
+Base.metadata.create_all(bind=engine)
 
-    Returns:
-        str: The classification result.
-    """
-    # Initialize the generative AI client (project and location masked)
-    client = genai.Client(
-        vertexai=True,
-        project="your-project-number",
-        location="your-region",
-    )
+# Request model for classify endpoint
+class ClassifyRequest(BaseModel):
+    question: str
 
-    # System instruction for the model to classify into specific categories
-    si_text1 = (
-        "You are a Classifier responsible to classify into CTS, CTS Campus, "
-        "Classroom Support, Print Team (External)."
-    )
+# Response model for classify endpoint
+class ClassifyResponse(BaseModel):
+    response: str
+    response_id: int
 
-    # Vertex AI endpoint for the model (masked)
-    model = "projects/********/locations/your-region/endpoints/********"
-    
-    # Prepare the user input as content for the model
-    contents = [
-        types.Content(
-            role="user",
-            parts=[
-                types.Part.from_text(text=question)  # Pass the actual question text
-            ]
-        ),
-    ]
+# Request model for feedback submission
+class FeedbackRequest(BaseModel):
+    response_id: int
+    correct: bool 
+    feedback_text: Optional[str] = None
 
-    # Configuration for content generation, including safety settings and system instructions
-    generate_content_config = types.GenerateContentConfig(
-        temperature=1,
-        top_p=0.95,
-        max_output_tokens=8192,
-        safety_settings=[
-            types.SafetySetting(
-                category="HARM_CATEGORY_HATE_SPEECH",
-                threshold="OFF"
-            ),
-            types.SafetySetting(
-                category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold="OFF"
-            ),
-            types.SafetySetting(
-                category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold="OFF"
-            ),
-            types.SafetySetting(
-                category="HARM_CATEGORY_HARASSMENT",
-                threshold="OFF"
-            )
-        ],
-        system_instruction=[types.Part.from_text(text=si_text1)],
-    )
+# Response model for feedback submission
+class FeedbackResponse(BaseModel):
+    message: str
 
-    # Generate content using the model and return the first chunk of text
-    for chunk in client.models.generate_content_stream(
-        model=model,
-        contents=contents,
-        config=generate_content_config,
-    ):
-        return chunk.text
+# Output model for feedback retrieval
+class FeedbackOut(BaseModel):
+    id: int
+    response_id: int
+    feedback_text: Optional[str]
+    correct: bool
+
+    class Config:
+        orm_mode = True
+
+# Save a question and its response to the database, return the response log ID
+def save_question_response(question: str, response: str) -> int:
+    db = SessionLocal()
+    db_entry = Responselog(question=question, response=response)
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
+    db.close()
+    return db_entry.id
+
+# Save feedback for a given response
+def save_feedback(response_id: int, correct: bool, feedback_text: Optional[str] = None):
+    db = SessionLocal()
+    entry = Feedback(response_id=response_id, correct=correct, feedback_text=feedback_text)
+    db.add(entry)
+    db.commit()
+    db.close()
+
+# Endpoint to classify a question and log the response
+@app.post("/api/classify", response_model=ClassifyResponse)
+async def classify_endpoint(request: ClassifyRequest):
+    result = classify.generate(request.question)
+    response_id = save_question_response(request.question, result)
+    return {"response": result, "response_id": response_id}
+
+# Endpoint to submit feedback for a response
+@app.post("/api/feedback", response_model=FeedbackResponse)
+async def submit_feedback(request: FeedbackRequest):
+    save_feedback(request.response_id, request.correct, request.feedback_text)
+    return {"message": "Feedback saved successfully."}
+
+# Endpoint to retrieve feedback for a specific response
+@app.get("/api/feedback/{response_id}", response_model=List[FeedbackOut])
+def get_feedback(response_id: int):
+    db = SessionLocal()
+    feedbacks = db.query(Feedback).filter(Feedback.response_id == response_id).all()
+    db.close()
+    return feedbacks
+
