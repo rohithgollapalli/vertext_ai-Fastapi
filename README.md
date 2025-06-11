@@ -54,9 +54,12 @@ vertex-ai-fastAPI/
 
    
       ```sh
-      # Test /api/classify endpoint curl -X POST http://127.0.0.1:8000/api/classify \ -H "Content-Type: application/json" \ -d '{"question": "Wifi issues at mc nair?"}'
-      # Test /api/feedback endpoint curl -X POST http://127.0.0.1:8000/api/feedback \ -H "Content-Type: application/json" \ -d '{"response_id": 1, "feedback": "Accurate classification"}' 
-      # Test /api/feedback/{response_id} endpoint curl http://127.0.0.1:8000/api/feedback/1
+      # Test
+      /api/classify endpoint curl -X POST http://127.0.0.1:8000/api/classify \ -H "Content-Type: application/json" \ -d '{"question": "Wifi issues at mc nair?"}'
+      # Test
+      /api/feedback endpoint curl -X POST http://127.0.0.1:8000/api/feedback \ -H "Content-Type: application/json" \ -d '{"response_id": 1, "feedback": "Accurate classification"}' 
+      # Test
+      /api/feedback/{response_id} endpoint curl http://127.0.0.1:8000/api/feedback/1
       ```
    
 
